@@ -1,5 +1,4 @@
-```python
-import streamlit as str
+import streamlit as st
 import pandas as pd
 import datetime
 import plotly.express as px
@@ -9,14 +8,10 @@ st.set_page_config(page_title="My_Health_Monitoring", layout="wide")
 st.title("🏥 My_Health_Monitoring Dashboard")
 st.markdown("---")
 
-# 2. 데이터 로드 함수 (여기서는 예시로 로컬/클라우드 가상 데이터 세팅, 실제 운영시 Google Drive 연동)
-# TIP: Google Drive 파일의 '링크가 있는 모든 사용자에게 공개(뷰어)' 권한을 준 후 CSV 내보내기 URL을 사용하면 편리합니다.
+# 2. 데이터 로드 함수
 @st.cache_data(ttl=600)  # 10분마다 데이터 캐시 갱신
 def load_data():
     try:
-        # Google Drive의 CSV 주소 예시 (실제 주소로 대체 가능)
-        # url = "[https://docs.google.com/spreadsheets/d/YOUR_FILE_ID/gviz/tq?tqx=out:csv](https://docs.google.com/spreadsheets/d/YOUR_FILE_ID/gviz/tq?tqx=out:csv)"
-        # return pd.read_csv(url)
         return pd.read_csv("health_data.csv")
     except FileNotFoundError:
         # 데이터 파일이 없을 경우 초기 데이터프레임 생성
@@ -46,7 +41,7 @@ if submit_button:
     new_df = pd.DataFrame(new_data)
     updated_data = pd.concat([data, new_df], ignore_index=True).drop_duplicates(subset=['Date'], keep='last')
     updated_data.to_csv("health_data.csv", index=False)
-    st.sidebar.success("✅ 데이터가 성공적으로 기록되었습니다! (클라우드 동기화)")
+    st.sidebar.success("✅ 데이터가 성공적으로 기록되었습니다!")
     st.rerun()
 
 # 4. 메인 화면 - 모니터링 Dashboard 시각화
