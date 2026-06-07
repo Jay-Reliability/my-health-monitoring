@@ -8,13 +8,12 @@ import json
 # =================================================================
 # [필수 설정] 본인의 구글 스프레드시트 기반 URL 정보들을 입력하세요.
 # =================================================================
-# 1. 구글 Apps Script에서 배포 후 복사한 웹 앱 URL
+# 1. 구글 Apps Script에서 배포 후 복사한 웹 앱 URL (그대로 유지)
 WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwzWqmw6aLnuUApsCAj1InAay7P65QB32weywJnaTdlAdLm9djvI71EEB0sM1xB_dfnOw/exec"
 
-# 2. 본인의 구글 스프레드시트 읽기용 CSV 변환 주소
-# 입력하신 시트 ID(1KrF8DrwibveGOtpWsafnzR24ddZq7jimZEUqr1FjGFM)를 반영해 두었습니다.
-# READ_URL = "https://docs.google.com/spreadsheets/d/1KrF8DrwibveGOtpWsafnzR24ddZq7jimZEUqr1FjGFM/gviz/tq?tqx=out:csv"
-READ_URL = "https://docs.google.com/spreadsheets/d/1vbQ5dTYTZyId2zVyo6ErjEBoWcglyM3PRQtMlbnOQDU/edit?usp=sharing"
+# 2. 본인의 구글 스프레드시트 읽기용 CSV 변환 주소 (보정 완료)
+# 새로 만드신 시트 ID 뒤에 '/gviz/tq?tqx=out:csv'를 정확히 붙여주어야 파이썬이 데이터를 읽어옵니다.
+READ_URL = "https://docs.google.com/spreadsheets/d/1vbQ5dTYTZyId2zVyo6ErjEBoWcglyM3PRQtMlbnOQDU/gviz/tq?tqx=out:csv"
 # =================================================================
 
 # 페이지 레이아웃 세팅
@@ -27,10 +26,18 @@ st.markdown("---")
 def load_data():
     try:
         df = pd.read_csv(READ_URL)
+        
+        # ⚠️ 구글 시트의 첫 행 컬럼명에 (kg)이나 (bpm) 등의 특수문자가 있으면 파이썬이 매칭하기 어려울 수 있으므로,
+        # 안전한 매칭을 위해 컬럼명을 표준화합니다.
         if df.empty or "Date" not in df.columns:
             return pd.DataFrame(columns=["Date", "Weight(kg)", "Blood_Pressure_Sys", "Blood_Pressure_Dia", "Heart_Rate(bpm)"])
+        
+        # 구글 시트 컬럼명 강제 동기화 (앱 스크립트 작성 기준 순서)
+        df.columns = ["Date", "Weight(kg)", "Blood_Pressure_Sys", "Blood_Pressure_Dia", "Heart_Rate(bpm)"]
         return df
     except Exception as e:
+        # 에러 발생 시 Streamlit 화면 우측 하단에서 원인을 볼 수 있도록 디버깅용 메시지 출력 (실운영 시 생략 가능)
+        st.sidebar.error(f"데이터 로드 실패 로그: {str(e)}")
         return pd.DataFrame(columns=["Date", "Weight(kg)", "Blood_Pressure_Sys", "Blood_Pressure_Dia", "Heart_Rate(bpm)"])
 
 data = load_data()
@@ -48,7 +55,7 @@ with st.sidebar.form(key="health_form", clear_on_submit=True):
 
 # [데이터 저장하기] 버튼 클릭 시 동작 메커니즘
 if submit_button:
-    # 1. 전송할 데이터 JSON 포맷팅
+    # 1. 전송할 데이터 JSON 포맷팅 (Apps Script 구조와 정확히 일치)
     payload = {
         "Date": str(input_date),
         "Weight": float(weight),
